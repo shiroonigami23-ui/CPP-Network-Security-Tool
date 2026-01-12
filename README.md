@@ -2,7 +2,7 @@
 
 This project provides a robust C++ network security tool for deep packet inspection (DPI), advanced anomaly detection, multithreaded packet processing, and Geo-IP lookup. It leverages the `libpcap` library to capture and analyze network traffic in real-time, helping to identify suspicious activities or unusual patterns.
 
-![C++ Network Security Banner](./visual/banner.png)
+![C++ Network Security Banner](./visual/banner.jpg)
 
 ## Table of Contents
 - [Features](#features)
