@@ -1,0 +1,307 @@
+\documentclass[14pt]{extarticle}
+
+% -----------------------------
+% General (big, readable) whitepaper styling
+% -----------------------------
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[margin=1in]{geometry}
+\usepackage[protrusion=true,expansion=true]{microtype}
+\usepackage{setspace}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{amsmath,amssymb}
+\usepackage{enumitem}
+\usepackage{url}
+\usepackage{hyperref}
+\usepackage{cleveref}
+\usepackage{listings}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+
+% Better page breaks with larger font
+\usepackage{nowidow}
+
+\hypersetup{hidelinks}
+
+% Slightly more spacious, ``general paper'' feel
+\setstretch{1.15}
+\setlist[itemize]{leftmargin=*,topsep=0.3em,itemsep=0.2em}
+\setlist[enumerate]{leftmargin=*,topsep=0.3em,itemsep=0.2em}
+
+\titleformat{\section}{\Large\bfseries}{\thesection}{0.6em}{}
+\titleformat{\subsection}{\large\bfseries}{\thesubsection}{0.6em}{}
+
+% -----------------------------
+% Header / footer
+% -----------------------------
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{C++ Network Security Tool Whitepaper}
+\rhead{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% -----------------------------
+% Listings setup (C++)
+% -----------------------------
+\lstdefinelanguage{ModernC++}{
+  language=[11]C++,
+  morekeywords={constexpr,noexcept,nullptr,thread,mutex,unique_lock,lock_guard,condition_variable,atomic,unordered_map,unordered_set,chrono},
+}
+
+\lstset{
+  language=ModernC++,
+  basicstyle=\ttfamily\small,
+  keywordstyle=\bfseries\color{black},
+  commentstyle=\itshape\color{gray!70!black},
+  stringstyle=\color{black},
+  columns=fullflexible,
+  keepspaces=true,
+  breaklines=true,
+  frame=single,
+  rulecolor=\color{black!20},
+  numbers=left,
+  numberstyle=\scriptsize\color{black!55},
+  xleftmargin=2.0em,
+  framexleftmargin=1.8em,
+  aboveskip=0.75em,
+  belowskip=0.75em,
+}
+
+% -----------------------------
+% Document metadata
+% -----------------------------
+\title{\textbf{ExtremeSniffer}\\\vspace{0.25em}
+\large A Practical Whitepaper on a Multithreaded C++ Network Capture, Inspection, and Anomaly Alerting Tool}
+
+\author{\textbf{Project Team}\\
+\normalsize Internal / General Documentation}
+
+\date{\normalsize \today}
+
+\begin{document}
+
+% -----------------------------
+% Title page
+% -----------------------------
+\begin{titlepage}
+  \centering
+  \vspace*{1.0cm}
+
+  {\Huge\bfseries ExtremeSniffer\par}
+  \vspace{0.35cm}
+  {\Large\bfseries Practical Whitepaper\par}
+  \vspace{0.8cm}
+
+  \begin{minipage}{0.92\textwidth}
+    \large
+    This document describes the imported C++ network security application in a clear, operator-focused way. It is \emph{not} a research paper: it is intended to be used by developers, students, and security practitioners who want to understand what the tool does, how it is built, how to run it, and what to expect in real environments.
+  \end{minipage}
+
+  \vspace{1.0cm}
+
+  \IfFileExists{visual/banner.jpg}{%
+    \includegraphics[width=0.92\textwidth]{visual/banner.jpg}\par
+  }{%
+    % No banner available
+  }
+
+  \vfill
+
+  {\large Version: 1.0\par}
+  {\large Date: \today\par}
+\end{titlepage}
+
+\tableofcontents
+\vspace{0.6cm}
+
+\section{Executive Summary}
+ExtremeSniffer is a C++ network security tool that captures live traffic, inspects packets for useful protocol fields, and raises structured alerts when it detects suspicious patterns. It uses \texttt{libpcap} for real-time packet capture and BPF filters, and can enrich IP addresses with geographic metadata using \texttt{libmaxminddb} and the GeoLite2 City database. The application is designed for:
+\begin{itemize}
+  \item learning and demonstrating packet capture + parsing,
+  \item lightweight host-based monitoring on lab machines,
+  \item generating JSON alerts that can be forwarded to log pipelines,
+  \item experimenting with multithreaded packet processing.
+\end{itemize}
+
+\section{What This Tool Does (In Plain Terms)}
+At runtime, the tool:
+\begin{enumerate}
+  \item listens on a network interface (e.g., \texttt{eth0}, \texttt{wlan0}),
+  \item captures packets in real time,
+  \item extracts information such as IP addresses, ports, and protocol hints,
+  \item optionally extracts higher-level fields when available (HTTP methods, user-agent strings, DNS query types),
+  \item keeps per-source statistics in memory,
+  \item prints JSON-formatted alerts when heuristics indicate:
+  \begin{itemize}
+    \item \textbf{port scanning},
+    \item \textbf{connection flooding},
+    \item \textbf{packet flooding}.
+  \end{itemize}
+\end{enumerate}
+
+\section{Intended Audience and Use Cases}
+\subsection{Audience}
+\begin{itemize}
+  \item Developers who want a readable reference implementation for \texttt{libpcap}.
+  \item Students learning network protocols and defensive telemetry.
+  \item Security engineers who need a small tool for lab validation and demonstrations.
+\end{itemize}
+
+\subsection{Example Use Cases}
+\begin{itemize}
+  \item Detect basic scanning in a training lab.
+  \item Observe traffic patterns during controlled security tests.
+  \item Enrich packet summaries with GeoIP context for reporting.
+  \item Build a foundation for custom detections.
+\end{itemize}
+
+\section{Key Features}
+\begin{itemize}
+  \item \textbf{Real-time capture} using \texttt{libpcap}.\cite{libpcap}
+  \item \textbf{Customizable filtering} using BPF filter syntax.\cite{bpf}
+  \item \textbf{Multithreaded processing} using a capture producer and one or more consumer threads.
+  \item \textbf{DPI-style parsing} for extracting application hints (HTTP/DNS) when traffic is visible.
+  \item \textbf{Heuristic anomaly alerts} (scan/flood indicators) with JSON output.
+  \item \textbf{GeoIP enrichment} via MaxMind DB + GeoLite2.\cite{maxminddb,geolite2}
+\end{itemize}
+
+\section{Project Layout (Imported)}
+The repository includes:
+\begin{itemize}
+  \item \texttt{ExtremeSniffer.cpp}: the primary implementation.
+  \item \texttt{NetworkSniffer.cpp}: a simpler baseline sniffer.
+  \item \texttt{CybersecurityAnalysis.md}: a deeper security discussion.
+  \item \texttt{visual/}: documentation images.
+\end{itemize}
+
+\section{How It Works (Architecture)}
+\subsection{High-Level Pipeline}
+\begin{enumerate}
+  \item \textbf{Capture:} receive packets from the OS capture path.
+  \item \textbf{Queue:} move packet data into a shared bounded buffer.
+  \item \textbf{Parse:} decode L2/L3/L4 headers, then attempt L7 parsing when applicable.
+  \item \textbf{Aggregate:} update per-source counters/sets.
+  \item \textbf{Decide:} compare stats against thresholds for scan/flood indicators.
+  \item \textbf{Alert:} print JSON with context (including GeoIP when enabled).
+\end{enumerate}
+
+\subsection{Why Multithreading Matters}
+Packet capture can be sensitive to delays: if analysis blocks capture, packets can drop. Separating capture (fast path) from analysis (slow path) helps keep the tool responsive under bursty traffic. The trade-off is added synchronization complexity and memory overhead.
+
+\section{Deep Packet Inspection (What We Extract)}
+\subsection{Network and Transport Fields}
+Typical extracted fields:
+\begin{itemize}
+  \item source/destination IP,
+  \item source/destination port,
+  \item protocol (TCP/UDP),
+  \item basic sizes/timestamps.
+\end{itemize}
+
+\subsection{Application Hints (When Visible)}
+When payload is in cleartext and recognizable:
+\begin{itemize}
+  \item \textbf{HTTP:} request method (GET/POST) and user-agent strings.
+  \item \textbf{DNS:} query names and record types.
+\end{itemize}
+
+\section{Detection Logic (Heuristics)}
+These detections are intentionally simple and explainable.
+
+\subsection{Port Scan Indicator}
+If a source IP contacts many distinct destination ports in a window, the tool raises a port-scan alert. This is effective for ``noisy'' scans and training labs.
+
+\subsection{Connection Flood Indicator}
+If a source IP opens many distinct destination endpoints (\texttt{dstIP:dstPort}), the tool raises a connection-flood alert. This can catch aggressive probing and some denial-of-service patterns.
+
+\subsection{Packet Flood Indicator}
+If a source IP sends an unusually high number of packets in a short time, the tool raises a packet-flood alert.
+
+\subsection{Tuning Guidance}
+Thresholds should be tuned per environment:
+\begin{itemize}
+  \item server subnets may have naturally higher connection diversity,
+  \item CI/CD runners may trigger bursts,
+  \item scanning tools can be configured ``low-and-slow'' to evade naive thresholds.
+\end{itemize}
+
+\section{GeoIP Enrichment}
+GeoIP adds location context to alerts (city/country) by reading a local database file. It is best-effort: private IP ranges and missing entries will not resolve.
+
+\section{Build and Run (Operator Notes)}
+\subsection{Prerequisites}
+\begin{itemize}
+  \item C++ compiler (e.g., \texttt{g++})
+  \item \texttt{libpcap-dev}\cite{libpcap}
+  \item \texttt{libmaxminddb-dev}\cite{maxminddb}
+  \item GeoLite2 City database file (e.g., \texttt{GeoLite2-City.mmdb})\cite{geolite2}
+\end{itemize}
+
+\subsection{Build}
+\begin{lstlisting}[caption={Example build command.},label={lst:build}]
+g++ ExtremeSniffer.cpp -o ExtremeSniffer -lpcap -pthread -lmaxminddb
+\end{lstlisting}
+
+\subsection{Run}
+Packet capture often requires elevated privileges.
+\begin{lstlisting}[caption={Example run command.},label={lst:run}]
+sudo ./ExtremeSniffer
+\end{lstlisting}
+
+\section{Output Format (JSON Alerts)}
+The tool prints alerts in JSON so they can be shipped to files, SIEMs, or log forwarders. A recommended operational pattern is to redirect output to a log file and rotate it.
+
+\subsection{Example (Illustrative)}
+\begin{lstlisting}[caption={Illustrative alert example (fields may vary by build/config).},label={lst:json}]
+{
+  "type": "port_scan",
+  "src_ip": "192.0.2.10",
+  "unique_dst_ports": 71,
+  "threshold": 50,
+  "geo": { "country": "US", "city": "Example" },
+  "timestamp": "2026-09-20T12:34:56Z"
+}
+\end{lstlisting}
+
+\section{Security, Safety, and Responsible Use}
+\begin{itemize}
+  \item Prefer least-privilege capture (capabilities, dedicated user) over full root when possible.
+  \item Treat parsed packet data as untrusted: always validate lengths and bounds.
+  \item Be careful with storing payloads (privacy/PII). Consider metadata-only mode for production.
+  \item Use the tool only on networks you own or have explicit permission to monitor.
+\end{itemize}
+
+\section{Known Limitations}
+\begin{itemize}
+  \item \textbf{Encryption:} TLS, DoH/DoT, and VPNs limit HTTP/DNS extraction.
+  \item \textbf{Evasion:} distributed and low-rate scans can avoid threshold-based heuristics.
+  \item \textbf{Performance:} high-speed links may outpace user-space capture without batching/kernel-bypass.
+\end{itemize}
+
+\section{Roadmap (Suggested Enhancements)}
+\begin{itemize}
+  \item sliding-window counters and time-based eviction for per-IP state,
+  \item optional flow tracking (5-tuple) and basic TCP state,
+  \item configurable thresholds via CLI or config file,
+  \item structured logging to file + rotation,
+  \item integration hooks (syslog/Kafka/OTel),
+  \item unit tests for parsers and decoders.
+\end{itemize}
+
+\appendix
+\section{Quick Reference}
+\subsection{Common BPF Filters}
+\begin{itemize}
+  \item \texttt{tcp}
+  \item \texttt{udp}
+  \item \texttt{port 53}
+  \item \texttt{host 192.168.1.10}
+\end{itemize}
+
+\bibliographystyle{plain}
+\bibliography{references}
+
+\end{document}
