@@ -28,6 +28,22 @@
 \usepackage{tikz}
 \usetikzlibrary{arrows.meta,positioning,shapes.geometric}
 
+% External SVG figures (SVG conversion may not run in all environments).
+% We therefore prefer PNG/PDF fallbacks if provided.
+\usepackage{svg}
+\svgsetup{inkscapearea=page}
+\svgpath{{visual/}}
+
+% Figure helper: prefer PNG/PDF fallbacks over SVG
+% Usage: \ExtFig[<width>]{<basename>}  (expects visual/<basename>.(png|pdf|svg))
+\newcommand{\ExtFig}[2][0.92\linewidth]{%
+  \IfFileExists{visual/#2.png}{\includegraphics[width=#1]{visual/#2.png}}{%
+    \IfFileExists{visual/#2.pdf}{\includegraphics[width=#1]{visual/#2.pdf}}{%
+      \includesvg[width=#1]{#2}% relies on svgpath
+    }%
+  }%
+}
+
 % Callout boxes
 \usepackage{tcolorbox}
 \tcbset{colback=black!2,colframe=black!25,arc=2pt,boxrule=0.6pt,left=6pt,right=6pt,top=6pt,bottom=6pt}
@@ -127,7 +143,7 @@
 \section{Executive Summary}
 ExtremeSniffer is a practical C++ network security tool that captures live traffic, inspects packets for actionable protocol fields, and generates structured alerts when it observes behaviors that commonly correlate with reconnaissance or denial-of-service activity.
 
-It uses \texttt{libpcap} for packet capture and BPF filtering, and can enrich public IP addresses with GeoIP metadata using \texttt{libmaxminddb} and the GeoLite2 City database.\cite{libpcap,bpf,maxminddb,geolite2}
+It uses \texttt{libpcap} for packet capture and BPF filtering, and can enrich public IP addresses with GeoIP metadata using \texttt{libmaxminddb} and the GeoLite2 City database.
 
 \begin{tcolorbox}[title=At a glance]
 \begin{itemize}
@@ -135,7 +151,7 @@ It uses \texttt{libpcap} for packet capture and BPF filtering, and can enrich pu
   \item \textbf{Output:} JSON alerts that can be redirected to a file, forwarded, or ingested by a SIEM.
   \item \textbf{Core detections:} port scanning, connection flooding, packet flooding.
   \item \textbf{Best fit:} labs, demos, lightweight host sensors, and prototyping.
-  \item \textbf{Not a replacement for:} full IDS/NDR platforms (e.g., Zeek/Suricata).\cite{zeek,suricata}
+  \item \textbf{Not a replacement for:} full IDS/NDR platforms (e.g., Zeek/Suricata).
 \end{itemize}
 \end{tcolorbox}
 
@@ -155,7 +171,7 @@ Think of ExtremeSniffer as a real-time ``network microscope'' with an alarm.
 \subsection{Runtime Workflow}
 \begin{enumerate}
   \item \textbf{Listen:} open a capture handle on a network interface.
-  \item \textbf{Filter:} optionally apply a BPF filter to reduce noise.\cite{bpf}
+  \item \textbf{Filter:} optionally apply a BPF filter to reduce noise.
   \item \textbf{Capture:} receive packets in real time.
   \item \textbf{Parse:} extract L2/L3/L4 fields; attempt HTTP/DNS hints when visible.
   \item \textbf{Score:} update per-source counters/sets and compare against thresholds.
@@ -172,7 +188,7 @@ Think of ExtremeSniffer as a real-time ``network microscope'' with an alarm.
 \section{Intended Audience and Use Cases}
 \subsection{Audience}
 \begin{itemize}
-  \item Developers who want a readable reference implementation for \texttt{libpcap}.\cite{libpcap}
+  \item Developers who want a readable reference implementation for \texttt{libpcap}.
   \item Students learning network protocols, packet formats, and defensive telemetry.
   \item Security engineers who want a small tool for lab validation, demos, and quick investigations.
 \end{itemize}
@@ -187,17 +203,17 @@ Think of ExtremeSniffer as a real-time ``network microscope'' with an alarm.
 
 \subsection{Where It Fits in a Security Stack}
 \begin{tcolorbox}[title=Positioning]
-Use ExtremeSniffer as a \textbf{sensor} and \textbf{event generator}. If you later need deep protocol analytics, signature rules, or enterprise-scale management, pair it with (or migrate to) Zeek/Suricata/Snort-style tooling.\cite{zeek,suricata,snort}
+Use ExtremeSniffer as a \textbf{sensor} and \textbf{event generator}. If you later need deep protocol analytics, signature rules, or enterprise-scale management, pair it with (or migrate to) a full IDS/NDR toolchain.
 \end{tcolorbox}
 
 \section{Key Features (Enhanced)}
 \begin{itemize}
-  \item \textbf{Real-time capture} using \texttt{libpcap}.\cite{libpcap}
-  \item \textbf{BPF traffic filtering} for precision collection and performance.\cite{bpf}
+  \item \textbf{Real-time capture} using \texttt{libpcap}.
+  \item \textbf{BPF traffic filtering} for precision collection and performance.
   \item \textbf{Multithreaded analysis pipeline} (capture thread + worker threads).
   \item \textbf{DPI-style parsing} to extract operator-useful fields (IP/ports + opportunistic HTTP/DNS hints).
   \item \textbf{Explainable heuristic detections} with tunable thresholds and low operational complexity.
-  \item \textbf{GeoIP enrichment} via MaxMind DB + GeoLite2.\cite{maxminddb,geolite2}
+  \item \textbf{GeoIP enrichment} via MaxMind DB + GeoLite2.
   \item \textbf{Operator-friendly JSON output} for easy downstream integration.
 \end{itemize}
 
@@ -238,6 +254,13 @@ Use ExtremeSniffer as a \textbf{sensor} and \textbf{event generator}. If you lat
 \end{tikzpicture}
 \end{center}
 
+\begin{figure}[ht]
+  \centering
+  \ExtFig[0.95\linewidth]{netfilter_packet_flow}
+  \caption{Reference packet-flow view (Linux netfilter) to help visualize where filtering and capture may occur.}
+  \label{fig:netfilter-flow}
+\end{figure}
+
 \subsection{Why Multithreading Matters}
 If analysis blocks capture, packets can drop. Separating capture (fast path) from analysis (slow path) helps keep the tool responsive under bursty traffic. The trade-off is synchronization complexity and memory overhead.
 
@@ -257,6 +280,13 @@ When payload is in cleartext and recognizable:
   \item \textbf{DNS:} query names and record types.
 \end{itemize}
 
+\begin{figure}[ht]
+  \centering
+  \ExtFig{dns_schema}
+  \caption{DNS request/response concepts (reference diagram) to contextualize DNS-related parsing and alerts.}
+  \label{fig:dns-schema}
+\end{figure}
+
 \begin{tcolorbox}[title=Reality check: encryption]
 In modern networks, much of HTTP is HTTPS and many DNS deployments use DoH/DoT. In those cases, the tool still provides strong L3/L4 metadata (IPs/ports/rates), but it will not reliably extract application-layer fields.
 \end{tcolorbox}
@@ -266,9 +296,16 @@ These detections are intentionally simple and explainable.
 
 \subsection{Port Scan Indicator}
 A typical scan pattern involves one source contacting many distinct destination ports. The tool tracks distinct destination ports per source and triggers when it crosses a threshold.
-
 \subsection{Connection Flood Indicator}
 The tool tracks distinct destination endpoints (\texttt{dstIP:dstPort}) contacted by a single source. This catches aggressive probing and some denial-of-service patterns.
+
+\begin{figure}[ht]
+  \centering
+  \ExtFig{tcp_handshake}
+  \caption{TCP connection establishment (reference diagram). Connection-flood behavior often manifests as repeated handshakes or bursts of connection attempts.}
+  \label{fig:tcp-handshake}
+\end{figure}
+
 
 \subsection{Packet Flood Indicator}
 The tool tracks packet rate/volume per source over a window and alerts when the count is unusually high.
