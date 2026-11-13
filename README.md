@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="assets/banner.gif" alt="ExtremeSniffer — C++ Network Security Tool animated banner" width="100%">
+<img src="visual/banner.jpg" alt="ExtremeSniffer — C++ Network Security Tool" width="100%">
 
 # 🛡️ ExtremeSniffer — C++ Network Security Tool
 
@@ -21,16 +21,10 @@
 ## 📸 Preview
 
 <p align="center">
-  <img src="visual/banner.jpg" alt="preview" width="45%">
   <img src="visual/netfilter_packet_flow.svg" alt="preview" width="45%">
   <img src="visual/tcp_handshake.svg" alt="preview" width="45%">
+  <img src="visual/dns_schema.svg" alt="preview" width="45%">
 </p>
-
-## 🎞 In Motion
-
-<table><tr>
-<td align="center" width="100%"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f6/Packet_Switching.gif/640px-Packet_Switching.gif" alt="Packets taking different routes through a network — exactly the traffic ExtremeSniffer captures" width="100%"><br><sub><b>Packets taking different routes through a network — exactly the traffic ExtremeSniffer captures</b><br>Oddbodz, <a href='https://commons.wikimedia.org/wiki/File:Packet_Switching.gif'>Wikimedia Commons</a>, CC BY-SA 3.0</sub></td>
-</tr></table>
 
 ## 📖 Overview
 
