@@ -18,14 +18,6 @@
 
 ---
 
-## 📸 Preview
-
-<p align="center">
-  <img src="visual/netfilter_packet_flow.svg" alt="preview" width="45%">
-  <img src="visual/tcp_handshake.svg" alt="preview" width="45%">
-  <img src="visual/dns_schema.svg" alt="preview" width="45%">
-</p>
-
 ## 📖 Overview
 
 **ExtremeSniffer** is a C++ network-security tool that captures live traffic with **libpcap**, performs
