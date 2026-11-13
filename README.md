@@ -49,6 +49,12 @@ protected queue that multiple processing threads drain concurrently. The repo al
 | **Basic sniffer** | `NetworkSniffer.cpp` — the original single-threaded version, kept for comparison |
 | **Research write-up** | `paper.tex` / `main.tex` white-paper + `CybersecurityAnalysis.md` threat model |
 
+## 📄 Technical Whitepaper
+
+**[Read the whitepaper (PDF)](docs/WHITEPAPER.pdf)** · [Markdown version](docs/WHITEPAPER.md)
+
+Architecture, detection model (port scan / connection flood / packet flood), Geo-IP enrichment, an honest limitations table and the evaluation plan.
+
 ## 🛠 Tech Stack
 
 | Layer | Technology |
