@@ -3,6 +3,13 @@
 All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic Versioning](https://semver.org/).
 
+## [Unreleased] - 2026-11-17
+
+### Changed
+- Removed committed binaries (`ExtremeSniffer`, `NetworkSniffer`); build from source as described in the README
+- Added `.gitignore` for build outputs and the GeoLite2 database
+- Added a GitHub Actions build check that compiles both programs on every push
+
 ## [Unreleased] - 2026-11-13
 
 ### Documentation

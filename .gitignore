@@ -1,0 +1,6 @@
+# Compiled binaries: build from source (see README)
+ExtremeSniffer
+NetworkSniffer
+*.o
+*.out
+*.mmdb

@@ -1,0 +1,19 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install libpcap and libmaxminddb
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends g++ libpcap-dev libmaxminddb-dev
+      - name: Build ExtremeSniffer
+        run: g++ -Wall -O2 ExtremeSniffer.cpp -o ExtremeSniffer -lpcap -pthread -lmaxminddb
+      - name: Build NetworkSniffer
+        run: g++ -Wall -O2 NetworkSniffer.cpp -o NetworkSniffer -lpcap
